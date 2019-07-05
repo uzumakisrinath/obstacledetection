@@ -1,0 +1,164 @@
+/*
+Obstacle avoidance with three individual HC-SR04 Ultrasonic Sensor based Robotic Project.
+Created on 28/06/2019.
+Place your Sensors facing straight and the sides to be about 45degree from the middle,
+covering the entire size of the robot.
+*/
+#include "NewPing.h"
+#define TRIGGER_PIN  10   //Plug your trigger and Echo pin of any one sensor at give pin Together
+#define ECHO_PIN  10
+#define TRIGGER_PIN1 6 
+#define ECHO_PIN1  6
+#define TRIGGER_PIN2 3 
+#define ECHO_PIN2  3
+#define MAX_DISTANCE  400   //Limiting to maximum of 4 metre accuracy.
+NewPing sonar1(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);//Args passed through each sensor.
+NewPing sonar2(TRIGGER_PIN1, ECHO_PIN1, MAX_DISTANCE);
+NewPing sonar3(TRIGGER_PIN2, ECHO_PIN2, MAX_DISTANCE);
+float duration , duration1 , duration2 , distance , distance1, distance2, soundcm;  
+int iterations = 5,formin=30,lmin=20,rmin=20;
+void setup() 
+{
+//using L293D IC and Two DC motor pins Initialization
+pinMode(A4, OUTPUT);
+pinMode(A5, OUTPUT);
+pinMode(A2, OUTPUT);
+pinMode(A3, OUTPUT);
+Serial.begin (9600);
+}
+void loop()
+{
+soundcm = 0.0340; //Vary the value according to your environmental setup.
+duration = sonar1.ping_median(iterations);//sensor at the front of the robot vehicle
+duration1 = sonar2.ping_median(iterations);//sensor at the right side of like right indicator side.
+duration2 = sonar3.ping_median(iterations);//sensor at the left side of like left indicator side.
+distance = (duration / 2) * soundcm; //printing the distance read by each sensor.
+Serial.print("Distance: ");Serial.print(distance);Serial.println(" cm");
+distance1 = (duration1 / 2) * soundcm;
+Serial.print("Distance1: ");Serial.print(distance1);Serial.println(" cm");
+distance2 = (duration2 / 2) * soundcm;
+Serial.print("Distance2: ");Serial.print(distance2);Serial.println(" cm");
+//forward condition
+forward();
+if ((distance==0)&& (distance1==0) && (distance2==0))
+{
+Serial.println("Forward: ");  
+forward();
+}
+else if((distance==0)&& (distance1>=lmin) && (distance2>=rmin))
+{
+Serial.println("Forward: ");  
+forward();  
+}
+else if((distance==0)&& (distance1>=lmin) && (distance2==0))
+{
+Serial.println("Forward: ");  
+forward();  
+}
+else if((distance==0)&& (distance1==0) && (distance2>=rmin))
+{
+Serial.println("Forward: ");  
+forward();  
+}
+else if((distance<=formin)&&(distance1>=lmin)&&(distance2>=rmin))
+{
+Serial.println("right: ");  
+right();
+}
+//front sensor based possibilities
+else if((distance<=formin)&&(distance1<=lmin)&&(distance2>=rmin))
+{
+Serial.println("Left: ");
+left();
+}
+else if((distance<=formin)&& (distance1>=lmin) && (distance2<=rmin))
+{
+Serial.println("Right: ");
+right();
+}
+else if((distance>=formin)&& (distance1<=lmin) && (distance2<=rmin))
+{
+Serial.println("NARROW PATH COME BACKWARDS AND ROTATE: ");
+backward();
+delay(1000);
+right();
+}
+//left sensor based condition
+else if ((distance1<=lmin)&&(distance>=formin)&&(distance2>=rmin))
+{
+Serial.println("Slide Left: ");
+slideleft();
+}
+//right sensor based condition
+else if ((distance1>=lmin)&&(distance>=formin)&&(distance2<=rmin))
+{
+Serial.println("Slide Right: ");
+slideright();
+}
+//stop condition
+else if ((distance<=formin)&& (distance1<=lmin) && (distance2<=rmin))
+{
+Serial.println("Stop and rotate: ");  
+backward();
+backward();
+backward();
+right();  
+}
+else
+{
+Serial.println("Forward in else: ");  
+forward();
+}
+}
+void forward()
+{
+digitalWrite(A4, HIGH);
+digitalWrite(A5, LOW);
+digitalWrite(A2, HIGH);
+digitalWrite(A3, LOW);//both left and right
+}
+void backward()
+{
+digitalWrite(A4, LOW);
+digitalWrite(A5, HIGH);
+digitalWrite(A2, LOW);
+digitalWrite(A3, HIGH);//both left and right
+}
+void left()
+{
+digitalWrite(A4, HIGH);
+digitalWrite(A5, LOW);
+digitalWrite(A2, LOW);
+digitalWrite(A3, HIGH);
+
+}
+void right()
+{
+digitalWrite(A4, LOW);
+digitalWrite(A5, HIGH);
+digitalWrite(A2, HIGH);
+digitalWrite(A3, LOW);
+
+}
+void slideleft()
+{
+digitalWrite(A4, HIGH);
+digitalWrite(A5, LOW);
+digitalWrite(A2, LOW);
+digitalWrite(A3, LOW);
+ 
+}
+void slideright()
+{
+  digitalWrite(A4, LOW);
+digitalWrite(A5, LOW);
+digitalWrite(A2, HIGH);
+digitalWrite(A3, LOW);
+}
+void stopit()
+{
+digitalWrite(A4, LOW);
+digitalWrite(A5, LOW);
+digitalWrite(A2, LOW);
+digitalWrite(A3, LOW);
+}
